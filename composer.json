@@ -1,0 +1,54 @@
+{
+    "name": "bernskioldmedia/helm-wp",
+    "description": "A local development framework for WordPress.",
+    "keywords": [
+        "framework",
+        "wordpress",
+        "local development",
+        "docker"
+    ],
+    "homepage": "https://bernskioldmedia.com",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Bernskiold Media",
+            "email": "hello@bernskioldmedia.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "laravel-zero/framework": "^10.0",
+        "nunomaduro/termwind": "^1.15"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.5",
+        "mockery/mockery": "^1.5.1",
+        "pestphp/pest": "^1.22.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "bin": [
+        "application"
+    ]
+}
