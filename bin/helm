@@ -4,13 +4,13 @@ UNAMEOUT="$(uname -s)"
 
 # Verify operating system is supported...
 case "${UNAMEOUT}" in
-    Linux*)             MACHINE=linux;;
-    Darwin*)            MACHINE=mac;;
-    *)                  MACHINE="UNKNOWN"
+Linux*) MACHINE=linux ;;
+Darwin*) MACHINE=mac ;;
+*) MACHINE="UNKNOWN" ;;
 esac
 
 if [ "$MACHINE" == "UNKNOWN" ]; then
-    echo "Unsupported operating system [$(uname -s)]. Laravel Sail supports macOS, Linux, and Windows (WSL2)." >&2
+    echo "Unsupported operating system [$(uname -s)]. Laravel Helm supports macOS, Linux, and Windows (WSL2)." >&2
 
     exit 1
 fi
@@ -78,7 +78,7 @@ function display_help {
     echo "  ${GREEN}helm bin ...${NC}   Run Composer binary scripts from the vendor/bin directory"
     echo
     echo "${YELLOW}Customization:${NC}"
-    echo "  ${GREEN}helm build --no-cache${NC}       Rebuild all of the Sail containers"
+    echo "  ${GREEN}helm build --no-cache${NC}       Rebuild all of the Helm containers"
 
     exit 1
 }
@@ -92,12 +92,19 @@ else
     display_help
 fi
 
+# Source the ".env" file so Laravel's environment variables are available...
+if [ ! -z "$APP_ENV" ] && [ -f ./.env.$APP_ENV ]; then
+  source ./.env.$APP_ENV;
+elif [ -f ./.env ]; then
+  source ./.env;
+fi
+
 # Define environment variables...
 export APP_PORT=80
 export APP_SERVICE="wordpress.test"
 export DB_PORT=3306
-export WWWUSER=$UID
-export WWWGROUP=$(id -g)
+export WWWUSER=${WWWUSER:-$UID}
+export WWWGROUP=${WWWGROUP:-$(id -g)}
 
 export HELM_FILES=""
 export HELM_SHARE_DASHBOARD=4040
@@ -107,7 +114,7 @@ export HELM_SHARE_SUBDOMAIN=""
 export HELM_SHARE_DOMAIN=$HELM_SHARE_SERVER_HOST
 export HELM_SHARE_SERVER=""
 
-# Function that outputs Sail is not running...
+# Function that outputs Helm is not running...
 function helm_is_not_running {
     echo "${BOLD}Helm is not running.${NC}" >&2
     echo "" >&2
@@ -117,7 +124,7 @@ function helm_is_not_running {
 }
 
 # Define Docker Compose command prefix...
-docker compose &> /dev/null
+docker compose &>/dev/null
 if [ $? == 0 ]; then
     DOCKER_COMPOSE=(docker compose)
 else
@@ -126,7 +133,7 @@ fi
 
 if [ -n "$HELM_FILES" ]; then
     # Convert HELM_FILES to an array...
-    IFS=':' read -ra HELM_FILES <<< "$HELM_FILES"
+    IFS=':' read -ra HELM_FILES <<<"$HELM_FILES"
 
     for FILE in "${HELM_FILES[@]}"; do
         if [ -f "$FILE" ]; then
@@ -143,17 +150,17 @@ EXEC="yes"
 
 if [ -z "$HELM_SKIP_CHECKS" ]; then
     # Ensure that Docker is running...
-    if ! docker info > /dev/null 2>&1; then
+    if ! docker info >/dev/null 2>&1; then
         echo "${BOLD}Docker is not running.${NC}" >&2
 
         exit 1
     fi
 
-    # Determine if Sail is currently up...
+    # Determine if Helm is currently up...
     if "${DOCKER_COMPOSE[@]}" ps "$APP_SERVICE" 2>&1 | grep 'Exit\|exited'; then
-        echo "${BOLD}Shutting down old Sail processes...${NC}" >&2
+        echo "${BOLD}Shutting down old Helm processes...${NC}" >&2
 
-        "${DOCKER_COMPOSE[@]}" down > /dev/null 2>&1
+        "${DOCKER_COMPOSE[@]}" down >/dev/null 2>&1
 
         EXEC="no"
     elif [ -z "$("${DOCKER_COMPOSE[@]}" ps -q)" ]; then
@@ -334,7 +341,7 @@ elif [ "$1" == "root-shell" ] || [ "$1" == "root-bash" ]; then
     fi
 
 # Initiate a Redis CLI terminal session within the "redis" container...
-elif [ "$1" == "redis" ] ; then
+elif [ "$1" == "redis" ]; then
     shift 1
 
     if [ "$EXEC" == "yes" ]; then
