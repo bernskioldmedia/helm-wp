@@ -12,9 +12,3 @@ To install, your project must be using composer. Require the package to your pro
 ```bash
 composer require --dev bernskioldmedia/helm-wp
 ```
-
-After that, you can run the `helm` command from your project root.
-
-```bash
-php helm-wp install
-```

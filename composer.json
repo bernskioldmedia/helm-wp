@@ -7,6 +7,10 @@
         "local development",
         "docker"
     ],
+    "support": {
+        "issues": "https://github.com/bernskioldmedia/helm-wp/issues",
+        "source": "https://github.com/bernskioldmedia/helm-wp"
+    },
     "homepage": "https://bernskioldmedia.com",
     "type": "project",
     "license": "MIT",
@@ -16,39 +20,13 @@
             "email": "hello@bernskioldmedia.com"
         }
     ],
-    "require": {
-        "php": "^8.1",
-        "laravel-zero/framework": "^10.0",
-        "nunomaduro/termwind": "^1.15"
-    },
-    "require-dev": {
-        "laravel/pint": "^1.5",
-        "mockery/mockery": "^1.5.1",
-        "pestphp/pest": "^1.22.3"
-    },
-    "autoload": {
-        "psr-4": {
-            "App\\": "app/",
-            "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Tests\\": "tests/"
-        }
-    },
     "config": {
-        "preferred-install": "dist",
-        "sort-packages": true,
-        "optimize-autoloader": true,
-        "allow-plugins": {
-            "pestphp/pest-plugin": true
-        }
+        "sort-packages": true
     },
-    "minimum-stability": "stable",
+    "minimum-stability": "dev",
     "prefer-stable": true,
     "bin": [
-        "application"
+        "helm-wp",
+        "bin/helm"
     ]
 }
