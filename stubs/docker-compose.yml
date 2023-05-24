@@ -3,7 +3,7 @@ services:
 
   wordpress.test:
     build:
-      context: ./vendor/bernskioldmedia/helm-wp/runtimes/7.4
+      context: ./vendor/bernskioldmedia/helm-wp/runtimes/8.2
       dockerfile: Dockerfile
       args:
         WWWGROUP: '${WWWGROUP}'
