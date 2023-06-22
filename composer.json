@@ -26,7 +26,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "bin": [
-        "helm-wp",
-        "bin/helm"
+        "bin/helm",
+        "bin/helm-migrate"
     ]
 }
