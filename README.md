@@ -90,6 +90,13 @@ if you have customized your vendor folder.
 
 For more information on the `helm` command, run `./vendor/bin/helm help`.
 
+### Creating an alias command
+This alias enables you to just type helm to reach our Helm WP environment instead of having to always type the full path to the `vendor/bin` directory.
+
+```bash
+alias helm='[ -f helm ] && sh helm || sh vendor/bin/helm'
+```
+
 ### Starting the container
 
 To start the container, run:
@@ -123,6 +130,9 @@ and more.
 
 # PHP Commands
 ./vendor/bin/helm php ...
+
+# WP-CLI Commands
+./vendor/bin/helm wp ...
 
 ```
 
