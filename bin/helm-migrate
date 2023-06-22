@@ -20,7 +20,7 @@ else
   BIN_DIR="$COMPOSER_RUNTIME_BIN_DIR"
 fi
 
-alias helm "$BIN_DIR/helm"
+alias helm="$BIN_DIR/helm"
 
 function display_help {
   echo
