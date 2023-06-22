@@ -101,6 +101,7 @@ if [ "$1" == "run" ]; then
             echo "...replacing $DOMAIN with $TEST_DOMAIN"
 
             # Run the replacements and save the number of replacements.
+            "$BIN_DIR/helm" wp search-replace "https://$DOMAIN" "http://$TEST_DOMAIN" --network --format=count --quiet
             REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
 
             echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
@@ -116,6 +117,7 @@ if [ "$1" == "run" ]; then
         echo "...replacing $PROD_DOMAIN with $TEST_DOMAIN"
 
         # Run the replacements and save the number of replacements.
+        "$BIN_DIR/helm" wp search-replace "https://$PROD_DOMAIN" "http://$TEST_DOMAIN" --format=count --quiet
         REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "https://$PROD_DOMAIN" "http://$TEST_DOMAIN" --format=count)
 
         echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
@@ -200,6 +202,7 @@ if [ "$1" == "selection" ]; then
         TEST_DOMAIN=$(echo $DOMAIN | sed 's/\.[^.]*$/.test/')
 
         echo "...replacing $DOMAIN with $TEST_DOMAIN"
+        "$BIN_DIR/helm" wp search-replace "https://$DOMAIN" "http://$TEST_DOMAIN" --quiet
         REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
 
         echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
