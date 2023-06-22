@@ -52,6 +52,10 @@ function display_help {
     echo "  ${GREEN}helm composer ...${NC}                       Run a Composer command"
     echo "  ${GREEN}helm composer require laravel/sanctum${NC}"
     echo
+    echo "${YELLOW}WP-CLI Commands:${NC}"
+    echo "  ${GREEN}helm wp ...${NC}                       Run a WP-CLI command"
+    echo "  ${GREEN}helm wp db tables${NC}"
+    echo
     echo "${YELLOW}Node Commands:${NC}"
     echo "  ${GREEN}helm node ...${NC}         Run a Node command"
     echo "  ${GREEN}helm node --version${NC}"
@@ -214,6 +218,18 @@ elif [ "$1" == "composer" ]; then
         ARGS+=(exec -u helm)
         [ ! -t 0 ] && ARGS+=(-T)
         ARGS+=("$APP_SERVICE" "composer" "$@")
+    else
+        helm_is_not_running
+    fi
+
+# Proxy WP commands to the "wp" binary on the application container...
+elif [ "$1" == "wp" ]; then
+    shift 1
+
+    if [ "$EXEC" == "yes" ]; then
+        ARGS+=(exec -u helm)
+        [ ! -t 0 ] && ARGS+=(-T)
+        ARGS+=("$APP_SERVICE" "wp" "$@")
     else
         helm_is_not_running
     fi
