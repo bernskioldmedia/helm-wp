@@ -20,8 +20,6 @@ else
   BIN_DIR="$COMPOSER_RUNTIME_BIN_DIR"
 fi
 
-HELM_COMMAND="$BIN_DIR/helm"
-
 function display_help {
   echo
   echo "============================================"
@@ -85,7 +83,7 @@ if [ "$1" == "run" ]; then
   echo "Importing the production database locally..."
 
   # Import the database locally.
-  $HELM_COMMAND wp db import db.sql
+  "$BIN_DIR/helm" wp db import db.sql
 
   echo
   echo "Removing the local database copy..."
@@ -97,12 +95,12 @@ if [ "$1" == "run" ]; then
 
   # If we are in a multisite, loop through all the sites and replace the production URL with the development URL.
   # If we are in a single-site, just replace the production URL with the development URL.
-  if $($HELM_COMMAND wp --url="$PROD_SITEURL" core is-installed --network); then
+  if $("$BIN_DIR/helm" wp --url="$PROD_SITEURL" core is-installed --network); then
     echo "${BOLD}This is a multisite.${NC}"
     echo "${BOLD}Replacing the production URLs with the development URLs...${NC}"
 
     # Loop through all the domains in the sites table.
-    for DOMAIN in $($HELM_COMMAND wp site list --field=domain); do
+    for DOMAIN in $("$BIN_DIR/helm" wp site list --field=domain); do
 
       # Replace the top level domain with .test.
       TEST_DOMAIN=$(echo $DOMAIN | sed 's/\.[^.]*$/.test/')
@@ -110,7 +108,7 @@ if [ "$1" == "run" ]; then
       echo "Replacing $DOMAIN with $TEST_DOMAIN..."
 
       # Run the replacements and save the number of replacements.
-      REPLACEMENTS=$($HELM_COMMAND wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
+      REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
 
       echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
       echo
@@ -125,7 +123,7 @@ if [ "$1" == "run" ]; then
     echo "Replacing $PROD_DOMAIN with $TEST_DOMAIN..."
 
     # Run the replacements and save the number of replacements.
-    REPLACEMENTS=$($HELM_COMMAND wp search-replace "https://$PROD_DOMAIN" "http://$TEST_DOMAIN" --format=count)
+    REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "https://$PROD_DOMAIN" "http://$TEST_DOMAIN" --format=count)
 
     echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
     echo
@@ -172,7 +170,7 @@ if [ "$1" == "selection" ]; then
   wp "$ENVIRONMENT" db export --tables=$(wp "$ENVIRONMENT" db tables --scope=global --format=csv) - >db-global.sql
 
   echo "Importing the global tables locally..."
-  $HELM_COMMAND wp db import db-global.sql
+  "$BIN_DIR/helm" wp db import db-global.sql
 
   echo "Removing the local copy..."
   rm db-global.sql
@@ -188,7 +186,7 @@ if [ "$1" == "selection" ]; then
     wp "$ENVIRONMENT" db export --tables=$(wp "$ENVIRONMENT" db tables --scope=blog --url="$SITE" --format=csv) - >"db".sql
 
     echo "Importing the $SITE database locally..."
-    $HELM_COMMAND wp db import "db".sql
+    "$BIN_DIR/helm" wp db import "db".sql
 
     echo "Removing the local copy."
     rm "db".sql
@@ -209,7 +207,7 @@ if [ "$1" == "selection" ]; then
     TEST_DOMAIN=$(echo $DOMAIN | sed 's/\.[^.]*$/.test/')
 
     echo "Replacing $DOMAIN with $TEST_DOMAIN..."
-    REPLACEMENTS=$($HELM_COMMAND wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
+    REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
 
     echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
     echo
