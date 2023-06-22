@@ -1,7 +1,8 @@
 # Helm WP
 
 Helm is Bernskiold Media's WordPress development framework. It's meant to be loaded as a Composer dev depenency and
-proves a set of tools to help you develop WordPress themes and plugins. Helm is heavily inspired by/a WordPress adapted fork of Laravel Sail.
+proves a set of tools to help you develop WordPress themes and plugins. Helm is heavily inspired by/a WordPress adapted
+fork of Laravel Sail.
 
 ## Installation
 
@@ -89,7 +90,9 @@ if you have customized your vendor folder.
 For more information on the `helm` command, run `./vendor/bin/helm help`.
 
 ### Creating an alias command
-This alias enables you to just type helm to reach our Helm WP environment instead of having to always type the full path to the `vendor/bin` directory.
+
+This alias enables you to just type helm to reach our Helm WP environment instead of having to always type the full path
+to the `vendor/bin` directory.
 
 ```bash
 alias helm='[ -f helm ] && sh helm || sh vendor/bin/helm'
@@ -158,3 +161,32 @@ The available runtimes are:
 - `8.1`
 - `8.2`
 
+## Running Helm Migrate
+
+Helm ships with a helper `helm-migrate` command to help migrate a production database to the local help environment.
+
+It requires a `wp-cli.yml` file in the root of your project. You can use the following as a starting point:
+
+```yaml
+@production:
+     ssh: user@server.com/path/to/wordpress
+```
+
+To migrate the database, run:
+
+```bash
+./vendor/bin/helm-migrate run production
+```
+
+For more information on the `helm-migrate` command, run `./vendor/bin/helm-migrate help`.
+
+### WordPress Multisite Support
+
+Helm Migrate supports WordPress Multisite out of the box. To migrate the entire environment you only need to run the run
+command as above. However, sometimes you only want to migrate one or a few sites in a large network.
+
+To do this, you use the `selection` command along with the envrionment name. It will then ask you for the site IDs.
+
+```bash
+./vendor/bin/helm-migrate selection production
+```
