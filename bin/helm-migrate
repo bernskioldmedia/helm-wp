@@ -2,218 +2,209 @@
 
 # Determine if stdout is a terminal...
 if test -t 1; then
-  # Determine if colors are supported...
-  ncolors=$(tput colors)
+    # Determine if colors are supported...
+    ncolors=$(tput colors)
 
-  if test -n "$ncolors" && test "$ncolors" -ge 8; then
-    BOLD="$(tput bold)"
-    YELLOW="$(tput setaf 3)"
-    GREEN="$(tput setaf 2)"
-    RED="$(tput setaf 1)"
-    NC="$(tput sgr0)"
-  fi
+    if test -n "$ncolors" && test "$ncolors" -ge 8; then
+        BOLD="$(tput bold)"
+        YELLOW="$(tput setaf 3)"
+        GREEN="$(tput setaf 2)"
+        RED="$(tput setaf 1)"
+        NC="$(tput sgr0)"
+    fi
 fi
 
 if [[ -z "$COMPOSER_RUNTIME_BIN_DIR" ]]; then
-  BIN_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+    BIN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 else
-  BIN_DIR="$COMPOSER_RUNTIME_BIN_DIR"
+    BIN_DIR="$COMPOSER_RUNTIME_BIN_DIR"
 fi
 
-alias helm="$BIN_DIR/helm"
-
 function display_help {
-  echo
-  echo "============================================"
-  echo "${BOLD}Production to development database migration${NC}"
-  echo "============================================"
-  echo
-  echo "This script will fetch the production database and import it locally."
-  echo "It will also replace the production URL with the development URL."
-  echo
-  echo "${YELLOW}Commands:${NC}"
-  echo "  ${GREEN}helm-migrate help${NC}       Display this help message."
-  echo "  ${GREEN}helm-migrate run <environment>${NC}        Run the migration for the sites/all sites."
-  echo "  ${GREEN}helm-migrate selection <environment>${NC}  Run the migration for a selection of site IDs."
-  echo
-  exit 1
+    echo
+    echo "============================================"
+    echo "${BOLD}Production to development database migration${NC}"
+    echo "============================================"
+    echo
+    echo "This script will fetch the production database and import it locally."
+    echo "It will also replace the production URL with the development URL."
+    echo
+    echo "${YELLOW}Commands:${NC}"
+    echo "  ${GREEN}helm-migrate help${NC}       Display this help message."
+    echo "  ${GREEN}helm-migrate run <environment>${NC}        Run the migration for the sites/all sites."
+    echo "  ${GREEN}helm-migrate selection <environment>${NC}  Run the migration for a selection of site IDs."
+    echo
+    exit 1
 }
 
 # Proxy the "help" command...
 if [ $# -gt 0 ]; then
-  if [ "$1" == "help" ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ]; then
-    display_help
-  fi
+    if [ "$1" == "help" ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ]; then
+        display_help
+    fi
 else
-  display_help
+    display_help
 fi
 
 # Check if the wp-cli.yml file is present or exit.
 if [ ! -f "wp-cli.yml" ]; then
-  echo "We can't find the wp-cli.yml file. Are you sure you are in the right directory?"
-  echo "You must have a wp-cli.yml file. In it you must also have a @production alias."
-  exit 1
+    echo "We can't find the wp-cli.yml file. Are you sure you are in the right directory?"
+    echo "You must have a wp-cli.yml file. In it you must also have a @production alias."
+    exit 1
 fi
 
 # The run command will fetch the production database and import it locally.
 # It will handle eithe a single-site or an entire multisite..
 if [ "$1" == "run" ]; then
-  shift 1
+    shift 1
 
-  ENVIRONMENT="@$1"
+    ENVIRONMENT="@$1"
 
-  # Check if the WP-CLI alias exists or exists.
-  if ! wp cli alias get "$ENVIRONMENT" --quiet; then
-    echo "${RED}The $ENVIRONMENT alias is not configured in wp-cli.yml.${NC}"
-    exit 1
-  fi
+    # Check if the WP-CLI alias exists or exists.
+    if ! wp cli alias get "$ENVIRONMENT" --quiet; then
+        echo "${RED}The $ENVIRONMENT alias is not configured in wp-cli.yml.${NC}"
+        exit 1
+    fi
 
-  echo
-  echo "${BOLD}Starting the migration...${NC}"
-
-  # Get the production and development URLs
-  PROD_SITEURL=$(wp "$ENVIRONMENT" option get siteurl)
-
-  echo
-  echo "Exporting the production database..."
-
-  # Read the production DB to STDOUT and save it locally to the file.
-  # This avoids having the database on the production server.
-  wp "$ENVIRONMENT" db export - >db.sql
-
-  echo
-  echo "Importing the production database locally..."
-
-  # Import the database locally.
-  helm wp db import db.sql
-
-  echo
-  echo "Removing the local database copy..."
-
-  # Remove the local database file.
-  rm db.sql
-
-  echo
-
-  # If we are in a multisite, loop through all the sites and replace the production URL with the development URL.
-  # If we are in a single-site, just replace the production URL with the development URL.
-  if $(helm wp --url="$PROD_SITEURL" core is-installed --network); then
-    echo "${BOLD}This is a multisite.${NC}"
-    echo "${BOLD}Replacing the production URLs with the development URLs...${NC}"
-
-    # Loop through all the domains in the sites table.
-    for DOMAIN in $(helm wp site list --field=domain); do
-
-      # Replace the top level domain with .test.
-      TEST_DOMAIN=$(echo $DOMAIN | sed 's/\.[^.]*$/.test/')
-
-      echo "Replacing $DOMAIN with $TEST_DOMAIN..."
-
-      # Run the replacements and save the number of replacements.
-      REPLACEMENTS=$(helm wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
-
-      echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
-      echo
-    done
-  else
-    echo "${BOLD}This is a single-site.${NC}"
-
-    # Convert the URLs to domains.
-    PROD_DOMAIN=$(echo $PROD_SITEURL | sed 's/https\?:\/\///' | sed 's/www\.//')
-    TEST_DOMAIN=$(echo $PROD_DOMAIN | sed 's/\.[^.]*$/.test/')
-
-    echo "Replacing $PROD_DOMAIN with $TEST_DOMAIN..."
-
-    # Run the replacements and save the number of replacements.
-    REPLACEMENTS=$(helm wp search-replace "https://$PROD_DOMAIN" "http://$TEST_DOMAIN" --format=count)
-
-    echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
     echo
-  fi
+    echo "${BOLD}💾 Starting the migration...${NC}"
+    echo
 
-  echo
-  echo "${BOLD}${GREEN}The migration was successful!${NC}"
+    # Get the production and development URLs
+    PROD_SITEURL=$(wp "$ENVIRONMENT" option get siteurl)
+
+    # Read the production DB to STDOUT and save it locally to the file.
+    # This avoids having the database on the production server.
+    echo "...exporting the production database."
+    wp "$ENVIRONMENT" db export - >db.sql
+
+    echo "...importing the production database locally."
+    "$BIN_DIR/helm" wp db import db.sql --quiet
+
+    echo "...removing the local database copy."
+    rm db.sql
+
+    echo
+
+    # If we are in a multisite, loop through all the sites and replace the production URL with the development URL.
+    # If we are in a single-site, just replace the production URL with the development URL.
+    if $("$BIN_DIR/helm" wp --url="$PROD_SITEURL" core is-installed --network); then
+        echo "${BOLD}This is a multisite.${NC}"
+        echo "${BOLD}Replacing the production URLs with the development URLs...${NC}"
+
+        # Loop through all the domains in the sites table.
+        for DOMAIN in $("$BIN_DIR/helm" wp site list --field=domain); do
+
+            # Replace the top level domain with .test.
+            TEST_DOMAIN=$(echo $DOMAIN | sed 's/\.[^.]*$/.test/')
+
+            echo "...replacing $DOMAIN with $TEST_DOMAIN"
+
+            # Run the replacements and save the number of replacements.
+            REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
+
+            echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
+            echo
+        done
+    else
+        echo "${BOLD}This is a single-site.${NC}"
+
+        # Convert the URLs to domains.
+        PROD_DOMAIN=$(echo $PROD_SITEURL | sed 's/https\?:\/\///' | sed 's/www\.//')
+        TEST_DOMAIN=$(echo $PROD_DOMAIN | sed 's/\.[^.]*$/.test/')
+
+        echo "...replacing $PROD_DOMAIN with $TEST_DOMAIN"
+
+        # Run the replacements and save the number of replacements.
+        REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "https://$PROD_DOMAIN" "http://$TEST_DOMAIN" --format=count)
+
+        echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
+        echo
+    fi
+
+    echo
+    echo "${BOLD}${GREEN}✅ The migration was successful!${NC}"
 fi
 
 # The selection command will fetch only specific sites from
 # the production database and import them locally.
 # It will also replace the production URL with the development URL.
 if [ "$1" == "selection" ]; then
-  shift 1
+    shift 1
 
-  ENVIRONMENT="@$1"
+    ENVIRONMENT="@$1"
 
-  # Check if the WP-CLI alias exists or exists.
+    # Check if the WP-CLI alias exists or exists.
     if ! wp cli alias get "$ENVIRONMENT" --quiet; then
-      echo "${RED}The $ENVIRONMENT alias is not configured in wp-cli.yml.${NC}"
-      exit 1
+        echo "${RED}The $ENVIRONMENT alias is not configured in wp-cli.yml.${NC}"
+        exit 1
     fi
 
-  # Check that the install is a multisite. Otherwise exit.
-  if ! $(wp "$ENVIRONMENT" core is-installed --network); then
-    echo "${RED}This is not a multisite.${NC}"
-    exit 1
-  fi
+    # Check that the install is a multisite. Otherwise exit.
+    if ! $(wp "$ENVIRONMENT" core is-installed --network); then
+        echo "${RED}This is not a multisite.${NC}"
+        exit 1
+    fi
 
-  # Ask for a comma-separated list of site URLS to migrate.
-  echo "${BOLD}Please enter a comma-separated list of site IDs to migrate (eg: 1,2,3):${NC}"
-  read SITE_IDS
+    # Ask for a comma-separated list of site URLS to migrate.
+    echo "${BOLD}Please enter a comma-separated list of site IDs to migrate (eg: 1,2,3):${NC}"
+    read SITE_IDS
 
-  # Ensure the user entered something.
-  if [ -z "$SITE_IDS" ]; then
-    echo "${RED}You must enter at least one site ID.${NC}"
-    exit 1
-  fi
-
-  echo
-  echo "${BOLD}Starting the global tables migration...${NC}"
-
-  echo "Exporting the global tables..."
-  wp "$ENVIRONMENT" db export --tables=$(wp "$ENVIRONMENT" db tables --scope=global --format=csv) - >db-global.sql
-
-  echo "Importing the global tables locally..."
-  helm wp db import db-global.sql
-
-  echo "Removing the local copy..."
-  rm db-global.sql
-
-  echo
-  echo "${BOLD}Starting the sites migration...${NC}"
-
-  # Loop through the sites and export the production database.
-  # Read the production DB to STDOUT and save it locally to the file.
-  # This avoids having the database on the production server.
-  for SITE in $(wp "$ENVIRONMENT" site list --field=url --site__in="$SITE_IDS" --format=csv); do
-    echo "Exporting the $SITE database..."
-    wp "$ENVIRONMENT" db export --tables=$(wp "$ENVIRONMENT" db tables --scope=blog --url="$SITE" --format=csv) - >"db".sql
-
-    echo "Importing the $SITE database locally..."
-    helm wp db import "db".sql
-
-    echo "Removing the local copy."
-    rm "db".sql
+    # Ensure the user entered something.
+    if [ -z "$SITE_IDS" ]; then
+        echo "${RED}You must enter at least one site ID.${NC}"
+        exit 1
+    fi
 
     echo
-  done
+    echo "${BOLD}Starting the global tables migration...${NC}"
 
-  echo
+    echo "...exporting the global tables."
+    wp "$ENVIRONMENT" db export --tables=$(wp "$ENVIRONMENT" db tables --scope=global --format=csv) - >db-global.sql
 
-  echo "${BOLD}Replacing the production URLs with the development URLs...${NC}"
+    echo "...importing the global tables locally."
+    "$BIN_DIR/helm" wp db import db-global.sql --quiet
 
-  # Loop through all the sites in the network and replace the production URL with the development URL.
-  # Create the development URL if it doesn't exist by using the production URL
-  # and replacing https with http and any top level domain with .test.
-  # This is a bit hacky, but it works.
+    echo "...removing the local copy."
+    rm db-global.sql
 
-  for DOMAIN in $(wp "$ENVIRONMENT" site list --field=domain --site__in="$SITE_IDS" --format=csv); do
-    TEST_DOMAIN=$(echo $DOMAIN | sed 's/\.[^.]*$/.test/')
-
-    echo "Replacing $DOMAIN with $TEST_DOMAIN..."
-    REPLACEMENTS=$(helm wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
-
-    echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
     echo
-  done
+    echo "${BOLD}Starting the sites migration...${NC}"
 
-  echo "${BOLD}${GREEN}The migration was successful!${NC}"
+    # Loop through the sites and export the production database.
+    # Read the production DB to STDOUT and save it locally to the file.
+    # This avoids having the database on the production server.
+    for SITE in $(wp "$ENVIRONMENT" site list --field=url --site__in="$SITE_IDS" --format=csv); do
+        echo "...exporting the $SITE database."
+        wp "$ENVIRONMENT" db export --tables=$(wp "$ENVIRONMENT" db tables --scope=blog --url="$SITE" --format=csv) - >"db".sql
+
+        echo "...importing the $SITE database locally."
+        "$BIN_DIR/helm" wp db import "db".sql --quiet
+
+        echo "...removing the local copy."
+        rm "db".sql
+
+        echo
+    done
+
+    echo
+
+    echo "${BOLD}Replacing the production URLs with the development URLs...${NC}"
+
+    # Loop through all the sites in the network and replace the production URL with the development URL.
+    # Create the development URL if it doesn't exist by using the production URL
+    # and replacing https with http and any top level domain with .test.
+    # This is a bit hacky, but it works.
+
+    for DOMAIN in $(wp "$ENVIRONMENT" site list --field=domain --site__in="$SITE_IDS" --format=csv); do
+        TEST_DOMAIN=$(echo $DOMAIN | sed 's/\.[^.]*$/.test/')
+
+        echo "...replacing $DOMAIN with $TEST_DOMAIN"
+        REPLACEMENTS=$("$BIN_DIR/helm" wp search-replace "$DOMAIN" "$TEST_DOMAIN" --network --format=count)
+
+        echo "${GREEN}Made $REPLACEMENTS replacements.${NC}"
+        echo
+    done
+
+    echo "${BOLD}${GREEN}✅ The migration was successful!${NC}"
 fi
